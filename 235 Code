@@ -3,3 +3,152 @@
 
 // For our robot to move and pick up 2 tennis balls at different heights to drop off in a hole //
 
+// START OF CODE
+#include <Servo.h>
+
+// Servo declarations
+Servo servo1;  // Claw (180-degree)
+Servo servo2;  // Hinge (180-degree)
+Servo servo3;  // Left wheel (360 continuous)
+Servo servo4;  // Right wheel (360 continuous)
+
+// DC motor pins
+const int motorIn1 = 7;
+const int motorIn2 = 8;
+
+// Switch pin
+const int switchPin = 2;
+
+// Hinge servo angles
+const int hingeClosed = 50;
+const int hingeOpen = 150;
+
+void setup() {
+  // Attach servos to PWM pins
+  servo1.attach(3);
+  servo2.attach(5);
+  servo3.attach(6);
+  servo4.attach(9);
+
+  // Set DC motor pins
+  pinMode(motorIn1, OUTPUT);
+  pinMode(motorIn2, OUTPUT);
+
+  pinMode(switchPin, INPUT_PULLUP);
+
+  delay(1000); // Startup delay
+}
+
+void loop() {
+  if (digitalRead(switchPin) == LOW) {
+    runSequence();
+
+    // Wait until switch is OFF before allowing another run
+    while (digitalRead(switchPin) == LOW) {
+      delay(10);
+    }
+  }
+}
+
+// === Functions ===
+
+void runSequence() {
+  // 1. Move arm out to grab taller ball
+  moveDCMotorForward(2000);
+  stopDCMotor(1000);
+
+  // 2. Close claw to grab ball
+  servo1.write(160);
+  delay(1000);
+
+  // 3. Lift arm (reverse motor)
+  moveDCMotorReverse(2000);
+  stopDCMotor(1000);
+
+  // 4. Open claw to drop ball
+  servo1.write(110);
+  delay(1000);
+
+  // 5. Back up slightly
+  driveBackward(3000);
+  stopWheels();
+
+  // 6. Turn right slightly
+  servo4.write(0);
+  delay(1000);
+  servo4.write(90);
+
+  // 7. Drive forward
+  driveForward(3000);
+  stopWheels();
+
+  // 8. Turn left slightly
+  servo3.write(0);
+  delay(1000);
+  servo3.write(90);
+
+  // 9. Move arm down to get second ball
+  moveDCMotorForward(2000);
+  stopDCMotor(1000);
+
+  // 10. Close claw again
+  servo1.write(160);
+  delay(500);
+
+  // 11. Lift and drop second ball
+  moveDCMotorReverse(2000);
+  stopDCMotor(1000);
+  servo1.write(120);
+
+  // 12. Reverse toward incinerator
+  driveBackward(3000);
+  stopWheels();
+
+  // 13. Turn left 90 degrees (rough)
+  servo3.write(180);
+  delay(1000);
+  servo3.write(90);
+
+  // 14. Open back hinge to unload
+  servo2.write(150);
+  delay(3000);
+  servo2.write(50);
+}
+
+// === Helpers ===
+
+void moveDCMotorForward(int duration) {
+  digitalWrite(motorIn1, HIGH);
+  digitalWrite(motorIn2, LOW);
+  delay(duration);
+}
+
+void moveDCMotorReverse(int duration) {
+  digitalWrite(motorIn1, LOW);
+  digitalWrite(motorIn2, HIGH);
+  delay(duration);
+}
+
+void stopDCMotor(int delayMs) {
+  digitalWrite(motorIn1, LOW);
+  digitalWrite(motorIn2, LOW);
+  delay(delayMs);
+}
+
+void driveForward(int duration) {
+  servo3.write(0);
+  servo4.write(180);
+  delay(duration);
+}
+
+void driveBackward(int duration) {
+  servo3.write(180);
+  servo4.write(0);
+  delay(duration);
+}
+
+void stopWheels() {
+  servo3.write(90);
+  servo4.write(90);
+  delay(100); // optional pause
+}
