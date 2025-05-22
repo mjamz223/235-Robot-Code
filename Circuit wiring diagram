@@ -1,0 +1,18 @@
+| Arduino Pin | Function                      |
+| ----------- | ----------------------------- |
+| D2          | Switch                        |
+| D3          | MX1508 #1 IN1 (Motor A dir 1) |
+| D4          | MX1508 #1 IN2 (Motor A dir 2) |
+| D5          | MX1508 #1 IN3 (Motor B dir 1) |
+| D6          | MX1508 #1 IN4 (Motor B dir 2) |
+| D7          | Ultrasonic Sensor #1 Trig     |
+| D8          | Ultrasonic Sensor #2 Trig     |
+| D9          | Continuous Servo #1 (PWM)     |
+| D10         | Continuous Servo #2 (PWM)     |
+| D11         | 180° Servo (PWM)              |
+| D12         | Ultrasonic Sensor #1 Echo     |
+| D13         | Ultrasonic Sensor #2 Echo     |
+| A0          | MX1508 #2 IN1 (Motor C dir 1) |
+| A1          | MX1508 #2 IN2 (Motor C dir 2) |
+| A2          | MX1508 #2 IN3 (Motor D dir 1) |
+| A3          | MX1508 #2 IN4 (Motor D dir 2) |
