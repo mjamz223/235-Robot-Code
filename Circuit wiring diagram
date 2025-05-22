@@ -1,3 +1,4 @@
+22/5/25
 | Arduino Pin | Function                      |
 | ----------- | ----------------------------- |
 | D2          | Switch                        |
@@ -16,3 +17,5 @@
 | A1          | MX1508 #2 IN2 (Motor C dir 2) |
 | A2          | MX1508 #2 IN3 (Motor D dir 1) |
 | A3          | MX1508 #2 IN4 (Motor D dir 2) |
+
+4 9V batteries btw
