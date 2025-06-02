@@ -17,3 +17,8 @@
 | A1          | MX1508 #2 IN2 (Motor C dir 2)          |
 | A2          | MX1508 #2 IN3 (Motor D dir 1)          |
 | A3          | MX1508 #2 IN4 (Motor D dir 2)          |
+
+1 black wire (ground) for each ultrasonc
+The yellow wire (signal wire) from the servos use the loose wires we soldered:
+    - the continuous servos use the 2 blue wires (yellow signal wire --> D9/D10)
+    - the 180 deg servo uses the white wire (yellow signal wire --> D11)
