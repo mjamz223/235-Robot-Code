@@ -1,0 +1,214 @@
+// 5/6/25
+#include <Servo.h>
+
+// === Pin Definitions ===
+const int switchPin = 2;
+
+// MX1508 Motor Driver #1
+const int motorA1 = 7;s
+const int motorA2 = 8;
+const int motorB1 = 12;
+const int motorB2 = 13;
+
+// MX1508 Motor Driver #2
+const int motorC1 = A0;
+const int motorC2 = A1;
+const int motorD1 = A2;
+const int motorD2 = A3;
+
+// Ultrasonic Sensor 1 (for driving)
+const int trig1 = 5;
+const int echo1 = 3;
+
+// Continuous servos
+Servo servo1;  // pin 9
+Servo servo2;  // pin 10
+
+// 180° servo
+Servo servo180; // pin 11
+
+// === Threshold Distance (cm) ===
+const int groundBallDistance = 22;
+
+long dist1 = 0.0;
+
+void setup() {
+  // Switch input
+  pinMode(switchPin, INPUT_PULLUP);
+
+  // Motor outputs
+  pinMode(motorA1, OUTPUT);
+  pinMode(motorA2, OUTPUT);
+  pinMode(motorB1, OUTPUT);
+  pinMode(motorB2, OUTPUT);
+  pinMode(motorC1, OUTPUT);
+  pinMode(motorC2, OUTPUT);
+  pinMode(motorD1, OUTPUT);
+  pinMode(motorD2, OUTPUT);
+
+  // Ultrasonic sensors
+  pinMode(trig1, OUTPUT);
+  pinMode(echo1, INPUT);
+  pinMode(trig2, OUTPUT);
+  pinMode(echo2, INPUT);
+
+  // Attach servos
+  servo1.attach(9);
+  servo2.attach(10);
+  servo180.attach(11);
+
+  stopDCMotors();           // Prevent wheel movement
+  servo1.write(90);         // Stop servo1
+  servo2.write(90);         // Stop servo2
+}
+
+bool systemStarted = false; // Flag to run startup sequence only once
+
+void loop() {
+  if (digitalRead(switchPin) == LOW && !systemStarted) {
+    // --- STARTUP ACTION ---
+    delay(1200);
+
+    // Move 180° servo to a certain angle (open claw if needed)
+    servo180.write(100); // Adjust angle if needed
+    delay(1000); // Let it finish moving
+
+    // Start continuous servos to move arm down to tree ball height
+    runContinuousServos();
+    delay(200);
+    stopContinuousServos();
+    delay(500);
+
+    // Close claw
+    servo180.write(0);
+    delay(2000);
+
+    // Move arm backwards (ball in hand)
+    runContinuousServosBackward();
+    delay(500);
+    stopContinuousServos();
+    delay(2000);
+
+    // Open claw
+    servo180.write(100);
+    delay(2000);
+
+    // Move backwards
+    moveBackward();
+    delay(800);
+    stopDCMotors();
+    delay(2000);
+
+    // Turn left
+    turnLeft();
+    delay(500);
+    stopDCMotors();
+    delay(2000);
+        
+    // Move forward until getting close to ground ball
+    while (true) {
+      dist1 = readUltrasonic(trig1, echo1);
+      Serial.print("Distance to ground ball: ");
+      Serial.println(dist1);
+
+      if (dist1 > groundBallDistance) {
+        moveForward();
+      } else {
+        stopDCMotors();
+        break; // Exit loop when close enough
+      }
+
+      delay(50); // Small delay to avoid sensor overload
+    }
+
+    // Move arm down continuously until it's near the ground ball
+    runContinuousServos();
+    delay(400);
+    stopContinuousServos();
+    delay(1500);
+
+    // Close claw to grab ball
+    servo180.write(0);
+    delay(2000);
+
+    // Move arm backwards (ball in hand)
+    runContinuousServosBackward();
+    delay(500);
+    stopContinuousServos();
+    delay(2000);
+
+    // Open claw to drop ball
+    servo180.write(100);
+    delay(2000);
+
+    systemStarted = true; // Mark startup as done
+    // --- END STARTUP SEQUENCE ---
+  }
+
+  // Optional: reset flag when switch is released, so you can run it again
+  if (digitalRead(switchPin) == HIGH && systemStarted) {
+    systemStarted = false;
+  }
+}
+
+// === Function to read ultrasonic sensor ===
+long readUltrasonic(int trigPin, int echoPin) {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  long duration = pulseIn(echoPin, HIGH, 30000); // 30ms max
+  long distance = duration * 0.034 / 2;
+  return distance;
+}
+
+// === Continuous Servo Control ===
+void runContinuousServos() {
+  servo1.write(40); // slow forward
+  servo2.write(140);
+}
+
+void runContinuousServosBackward() {
+  servo1.write(110);  // backward for servo1
+  servo2.write(70);   // backward for servo2
+}
+
+void stopContinuousServos() {
+  servo1.write(90); // stop
+  servo2.write(90);
+}
+
+// === DC Motor Control ===
+void moveForward() {                 // All wheels drive forward
+  digitalWrite(motorA1, HIGH); digitalWrite(motorA2, LOW);   // Top R
+  digitalWrite(motorB1, LOW);  digitalWrite(motorB2, HIGH);  // Top L (inverted)
+  digitalWrite(motorC1, HIGH); digitalWrite(motorC2, LOW);   // Back R
+  digitalWrite(motorD1, LOW);  digitalWrite(motorD2, HIGH);  // Back L (inverted)
+}
+
+void moveBackward() {                // All wheels drive backward
+  digitalWrite(motorA1, LOW);  digitalWrite(motorA2, HIGH);  // Top R
+  digitalWrite(motorB1, HIGH); digitalWrite(motorB2, LOW);   // Top L (inverted)
+  digitalWrite(motorC1, LOW);  digitalWrite(motorC2, HIGH);  // Back R
+  digitalWrite(motorD1, HIGH); digitalWrite(motorD2, LOW);   // Back L (inverted)
+}
+
+void turnLeft() {                    // Rotate in place, CCW
+  // Right wheels forward
+  digitalWrite(motorA1, HIGH); digitalWrite(motorA2, LOW);   // Top R
+  digitalWrite(motorC1, HIGH); digitalWrite(motorC2, LOW);   // Back R
+  // Left wheels backward
+  digitalWrite(motorB1, HIGH); digitalWrite(motorB2, LOW);   // Top L (inverted)
+  digitalWrite(motorD1, HIGH); digitalWrite(motorD2, LOW);   // Back L (inverted)
+}
+
+void stopDCMotors() {                // Halt all wheels
+  digitalWrite(motorA1, LOW); digitalWrite(motorA2, LOW);
+  digitalWrite(motorB1, LOW); digitalWrite(motorB2, LOW);
+  digitalWrite(motorC1, LOW); digitalWrite(motorC2, LOW);
+  digitalWrite(motorD1, LOW); digitalWrite(motorD2, LOW);
+}
+
+
